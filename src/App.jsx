@@ -167,7 +167,7 @@ Evaluate the translation using this rubric (respond ONLY in JSON, no markdown, n
 }`;
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/evaluate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
