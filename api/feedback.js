@@ -11,9 +11,10 @@ export default async function handler(req, res) {
     { key: "creatividad", label: "Creatividad y solución de problemas" },
   ];
 
-  const avg = Object.values(scores).reduce((a, b) => a + b, 0) / Object.values(scores).length;
+  const vals = Object.values(scores).filter(Boolean);
+  const avg = vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : "—";
 
-  const rubricLines = CRITERIA.map(c =>
+  const rubric = CRITERIA.map(c =>
     `${c.label}: ${scores[c.key] || "—"}/5 (${SCORE_LABELS[scores[c.key]] || "—"})`
   ).join("\n");
 
@@ -21,63 +22,33 @@ export default async function handler(req, res) {
     `[${t.id}] ${t.category}\nOriginal: ${t.source}\nTu traducción: ${t.translation}`
   ).join("\n\n");
 
-  const emailBody = `Hola ${studentName},
-
-Tu instructora ha revisado tu ejercicio de localización y te envía la siguiente retroalimentación.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-PUNTUACIÓN INDIVIDUAL
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-${rubricLines}
-
-Promedio: ${avg.toFixed(1)} / 5
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-RETROALIMENTACIÓN GRUPAL
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-${groupFeedback}
-${note ? `\n━━━━━━━━━━━━━━━━━━━━━━━━━━\nNOTA PERSONAL\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n${note}` : ""}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-TUS TRADUCCIONES
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-${translationLines}
-
-Saludos,
-Tu instructora`;
-
   try {
-    const serviceId = process.env.EMAILJS_SERVICE_ID;
-    const templateId = process.env.EMAILJS_TEMPLATE_ID;
-    const publicKey = process.env.EMAILJS_PUBLIC_KEY;
-
-    if (!serviceId) {
-      console.log("EmailJS not configured. Would send to:", studentEmail);
-      console.log(emailBody);
-      return res.status(200).json({ ok: true, note: "Email logged (EmailJS not configured)" });
-    }
-
-    await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        service_id: serviceId,
-        template_id: templateId,
-        user_id: publicKey,
+        service_id: "service_he3d758",
+        template_id: "template_jie7jqr",
+        user_id: "sP8EkbLzGvKFklM64",
         template_params: {
           to_name: studentName,
           to_email: studentEmail,
-          rubric: rubricLines,
-          average: avg.toFixed(1),
-          group_feedback: groupFeedback,
-          personal_note: note || "",
+          rubric,
+          average: avg,
+          group_feedback: groupFeedback || "",
+          personal_note: note ? `Nota de tu instructora:\n${note}` : "",
           translations: translationLines,
         },
       }),
     });
 
-    return res.status(200).json({ ok: true });
+    if (response.ok) {
+      return res.status(200).json({ ok: true });
+    } else {
+      const err = await response.text();
+      return res.status(500).json({ error: err });
+    }
   } catch (error) {
-    return res.status(500).json({ error: "Failed to send email" });
+    return res.status(500).json({ error: error.toString() });
   }
 }
