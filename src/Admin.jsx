@@ -36,7 +36,7 @@ export default function Admin() {
     setLoading(true);
     try {
       if (SHEETS_URL !== "YOUR_GOOGLE_SHEETS_WEBAPP_URL") {
-        const res = await fetch(SHEETS_URL + "?action=get");
+        const res = await fetch("/api/sheets");
         const data = await res.json();
         setSubmissions(data.submissions || []);
       } else {

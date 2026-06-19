@@ -159,9 +159,8 @@ Si no hay problemas, devuelve "issues":[] y "ok":true.`;
         aiScore: evals[i]?.ok ? "OK" : "Con observaciones",
         aiSummary: (evals[i]?.issues || []).join(" | "),
       }));
-      await fetch(SHEETS_URL, {
+      await fetch("/api/sheets", {
         method: "POST",
-        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rows }),
       });
