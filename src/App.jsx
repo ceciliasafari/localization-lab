@@ -112,6 +112,8 @@ export default function App() {
   const allDone = STRINGS.every(s => (translations[s.id] || "").trim().length > 0);
   const doneCount = Object.keys(translations).filter(k => translations[k].trim()).length;
 
+  const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxgcEcYwq81sNDOXLFSc9pjZnqMVo7Pq6bT4yEWjzQeHO7cESMynEdP7zPsQZlo_aro/exec";
+
   async function handleSubmit() {
     setLoading(true);
     let evals = [];
@@ -144,6 +146,27 @@ Si no hay problemas, devuelve "issues":[] y "ok":true.`;
     } catch {
       evals = STRINGS.map(() => ({ ok: true, issues: [] }));
     }
+    // Send to Google Sheets
+    try {
+      const rows = STRINGS.map((s, i) => ({
+        timestamp: new Date().toISOString(),
+        student: student.name,
+        email: student.email,
+        stringId: s.id,
+        category: s.category,
+        source: s.source,
+        translation: translations[s.id] || "",
+        aiScore: evals[i]?.ok ? "OK" : "Con observaciones",
+        aiSummary: (evals[i]?.issues || []).join(" | "),
+      }));
+      await fetch(SHEETS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rows }),
+      });
+    } catch { /* sheets optional */ }
+
     setEvaluation(evals);
     setLoading(false);
     setStep("done");
