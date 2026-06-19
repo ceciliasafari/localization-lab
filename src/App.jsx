@@ -116,15 +116,22 @@ export default function App() {
     setLoading(true);
     let evals = [];
     try {
-      const prompt = `You are a video game localization evaluator. Evaluate ${STRINGS.length} Latin American Spanish translations of a Fantasy RPG.
-Student: ${student.name}
-${STRINGS.map((s, i) => `STRING ${i+1}: ${s.id} [${s.category}]
-Original: ${s.source}
-Translation: ${translations[s.id] || "(empty)"}
-Context: ${s.context}
-Note: ${s.note}`).join("\n\n")}
-Respond ONLY with a JSON array, no markdown:
-[{"total":0-100,"summary":"2 sentences in Spanish","issues":["issue in Spanish"]}]`;
+      const prompt = `Eres un revisor técnico de localización de videojuegos. Revisa ÚNICAMENTE aspectos técnicos y formales — NO evalúes decisiones de traducción, adaptaciones culturales ni estilo creativo.
+
+Revisa solo estos criterios:
+1. Ortografía y acentuación en español latino
+2. Ortotipografía y puntuación (¿¡, comillas, puntos, comas)
+3. Variables técnicas: {0}, {1}, %s, %d, [JUMP] deben aparecer exactamente igual que en el original
+4. Consistencia interna de términos
+
+NO comentes sobre: fidelidad al original, registro, tono, creatividad ni adaptación cultural.
+Habla directamente al estudiante en segunda persona (tú), en español, de forma breve y constructiva.
+
+${STRINGS.map((s, i) => "STRING " + (i+1) + ": " + s.id + " [" + s.category + "]\nOriginal: " + s.source + "\nTraducción: " + (translations[s.id] || "(vacío)")).join("\n\n")}
+
+Responde ÚNICAMENTE con un array JSON sin markdown:
+[{"issues":["problema técnico en segunda persona, si existe"], "ok": true}]
+Si no hay problemas, devuelve "issues":[] y "ok":true.`;
 
       const res = await fetch("/api/evaluate", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -135,7 +142,7 @@ Respond ONLY with a JSON array, no markdown:
       const raw = data.content?.find(b => b.type === "text")?.text || "[]";
       evals = JSON.parse(raw.replace(/```json|```/g, "").trim());
     } catch {
-      evals = STRINGS.map(() => ({ total: 0, summary: "No se pudo evaluar automáticamente.", issues: [] }));
+      evals = STRINGS.map(() => ({ ok: true, issues: [] }));
     }
     setEvaluation(evals);
     setLoading(false);
@@ -174,38 +181,47 @@ Respond ONLY with a JSON array, no markdown:
   if (step === "done") return (
     <div style={S.page}>
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 16px" }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ fontSize: 48 }}>✓</div>
-          <h1 style={{ ...S.title, color: "#4ade80", marginTop: 12 }}>¡Ejercicio entregado!</h1>
-          <p style={{ color: "#64748b", fontSize: 14, marginTop: 8, lineHeight: 1.7 }}>
-            Tus traducciones han sido registradas, <strong style={{ color: "#e2e8f0" }}>{student.name}</strong>.<br />
-            Tu instructora revisará tu trabajo y te enviará retroalimentación personalizada.
-          </p>
+
+        {/* Confirmation header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28,
+          background: "#0d1f14", border: "1px solid #4ade8040", borderRadius: 12, padding: "20px 24px" }}>
+          <div style={{ fontSize: 36, lineHeight: 1 }}>✓</div>
+          <div>
+            <h1 style={{ ...S.title, color: "#4ade80", fontSize: 18, margin: 0 }}>¡Ejercicio entregado!</h1>
+            <p style={{ color: "#64748b", fontSize: 13, marginTop: 4, lineHeight: 1.6 }}>
+              Tus traducciones han sido registradas, <strong style={{ color: "#e2e8f0" }}>{student.name}</strong>.
+              Tu instructora revisará tu trabajo y te enviará retroalimentación personalizada.
+            </p>
+          </div>
         </div>
-        <div style={{ ...S.notice, marginBottom: 24 }}>
-          🤖 La evaluación de abajo es <strong>preliminar y automática</strong>. No es la calificación final. Tu instructora revisará cada traducción y te enviará comentarios personalizados.
+
+        {/* AI notice */}
+        <div style={{ ...S.notice, marginBottom: 20 }}>
+          🤖 La revisión técnica de abajo es <strong>preliminar y automática</strong>. Solo cubre ortografía, puntuación y variables. No es la calificación final — tu instructora revisará tu trabajo completo.
         </div>
+
+        {/* Per-string technical feedback */}
         {evaluation && STRINGS.map((s, i) => {
           const ev = evaluation[i] || {};
+          const hasIssues = ev.issues && ev.issues.length > 0;
           return (
-            <div key={s.id} style={S.evalCard}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div key={s.id} style={{ ...S.evalCard, borderColor: hasIssues ? "#f8717140" : "#4ade8030" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <Badge cat={s.category} />
                   <span style={{ color: "#4b5563", fontSize: 12 }}>{s.id}</span>
                 </div>
-                <span style={{ fontSize: 22, fontWeight: 800,
-                  color: ev.total >= 80 ? "#4ade80" : ev.total >= 60 ? "#facc15" : "#f87171" }}>
-                  {ev.total}<span style={{ fontSize: 12, color: "#4b5563" }}>/100</span>
+                <span style={{ fontSize: 12, fontWeight: 700,
+                  color: hasIssues ? "#f87171" : "#4ade80" }}>
+                  {hasIssues ? "⚠ Revisar" : "✓ Sin observaciones técnicas"}
                 </span>
               </div>
-              <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 4 }}>Tu traducción:
-                <span style={{ color: "#cbd5e1", marginLeft: 6 }}>{translations[s.id]}</span>
+              <div style={{ fontSize: 13, color: "#cbd5e1", marginBottom: hasIssues ? 8 : 0 }}>
+                {translations[s.id]}
               </div>
-              <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6, marginTop: 6 }}>{ev.summary}</div>
-              {ev.issues?.map((iss, j) => (
-                <div key={j} style={{ fontSize: 12, color: "#94a3b8", borderLeft: "2px solid #f8717140",
-                  paddingLeft: 10, marginTop: 8 }}>⚠ {iss}</div>
+              {hasIssues && ev.issues.map((iss, j) => (
+                <div key={j} style={{ fontSize: 12, color: "#fca5a5", borderLeft: "2px solid #f8717150",
+                  paddingLeft: 10, marginTop: 6, lineHeight: 1.5 }}>⚠ {iss}</div>
               ))}
             </div>
           );
