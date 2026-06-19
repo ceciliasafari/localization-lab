@@ -128,7 +128,7 @@ Respond ONLY with a JSON array, no markdown:
 
       const res = await fetch("/api/evaluate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000,
+        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 2000,
           messages: [{ role: "user", content: prompt }] }),
       });
       const data = await res.json();
