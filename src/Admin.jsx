@@ -11,7 +11,7 @@ const SCORE_LABELS = { 1: "Insuficiente", 2: "Regular", 3: "Aceptable", 4: "Buen
 const SCORE_COLORS = { 1: "#f87171", 2: "#fb923c", 3: "#facc15", 4: "#60a5fa", 5: "#4ade80" };
 
 const ADMIN_PASSWORD = "loclab2025";
-const SHEETS_URL = "YOUR_GOOGLE_SHEETS_WEBAPP_URL";
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxgcEcYwq81sNDOXLFSc9pjZnqMVo7Pq6bT4yEWjzQeHO7cESMynEdP7zPsQZlo_aro/exec";
 
 export default function Admin() {
   const [auth, setAuth] = useState(false);
