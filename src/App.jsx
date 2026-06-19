@@ -1,501 +1,395 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 
+// ─── STRINGS ──────────────────────────────────────────────────────────────────
 const STRINGS = [
   {
-    id: "UI_001",
-    category: "HUD",
-    source: "Health: {0} / {1}",
-    maxChars: 20,
-    context: "HUD display showing current and maximum health points in battle.",
+    id: "UI_001", category: "HUD",
+    source: "Health: {0} / {1}", maxChars: 20,
+    context: "Indicador de vida en combate. Aparece en la esquina superior izquierda durante batallas.",
     characterName: null,
-    note: "Keep variables {0} and {1} intact. Very limited space.",
+    note: "Conserva las variables {0} y {1} exactamente como aparecen. Espacio muy limitado.",
+    image: "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=800&q=80",
+    imageCaption: "Pantalla de combate — HUD activo",
   },
   {
-    id: "DLG_002",
-    category: "DIALOGUE",
+    id: "DLG_002", category: "DIÁLOGO",
     source: "The cursed blade has awakened. You must not wield it, traveler — not until the prophecy is fulfilled.",
     maxChars: 120,
-    context: "An ancient wizard warns the player about a legendary sword. Formal, archaic tone.",
-    characterName: "Archimage Valdren",
-    note: "Formal register. The wizard speaks in elevated, old-fashioned style.",
+    context: "Un archimago anciano advierte al jugador sobre una espada legendaria. Registro formal y arcaico.",
+    characterName: "Archimago Valdren",
+    note: "Registro elevado y formal. El personaje habla como en textos medievales. Evita contracciones.",
+    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80",
+    imageCaption: "Torre del Archimago — escena de advertencia",
   },
   {
-    id: "MNU_003",
-    category: "MENU",
-    source: "New Game",
-    maxChars: 12,
-    context: "Main menu button to start a new playthrough.",
+    id: "MNU_003", category: "MENÚ",
+    source: "New Game", maxChars: 12,
+    context: "Botón del menú principal para iniciar una nueva partida.",
     characterName: null,
-    note: "Very short. Must be a noun phrase, not a verb.",
+    note: "Debe ser una frase nominal, no verbal. Muy corto.",
+    image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&q=80",
+    imageCaption: "Menú principal del juego",
   },
   {
-    id: "DLG_004",
-    category: "DIALOGUE",
+    id: "DLG_004", category: "DIÁLOGO",
     source: "I've been waiting for you, %s. The kingdom of Arathos needs its champion.",
     maxChars: 100,
-    context: "NPC greets the player by their chosen character name. Dramatic, cinematic tone.",
-    characterName: "Queen Seraphine",
-    note: "Variable %s = player name. Do not translate it.",
+    context: "Una NPC saluda al jugador usando su nombre elegido. Tono dramático y cinematográfico.",
+    characterName: "Reina Seraphine",
+    note: "La variable %s representa el nombre del jugador. No la traduzcas ni la muevas de lugar.",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80",
+    imageCaption: "Sala del trono — primera audiencia con la Reina",
   },
   {
-    id: "SYS_005",
-    category: "SYSTEM",
+    id: "SYS_005", category: "SISTEMA",
     source: "Your companion has fallen. Return to a safe zone to revive them.",
     maxChars: 80,
-    context: "On-screen alert when a party member is defeated in battle.",
+    context: "Alerta en pantalla cuando un miembro del grupo cae derrotado en combate.",
     characterName: null,
-    note: "Urgent tone but not aggressive. Informational.",
+    note: "Tono urgente pero informativo, no agresivo. Debe motivar acción.",
+    image: "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=800&q=80",
+    imageCaption: "Combate — compañero derrotado",
   },
   {
-    id: "ITM_006",
-    category: "ITEM",
+    id: "ITM_006", category: "ÍTEM",
     source: "Elixir of Forgotten Shadows — Restores %d MP and grants invisibility for 30 seconds.",
     maxChars: 90,
-    context: "Item description in inventory screen.",
+    context: "Descripción de objeto en el inventario. Nombre poético seguido de efecto concreto.",
     characterName: null,
-    note: "Keep %d for mana value. Poetic item name should be translated.",
+    note: "Traduce el nombre del ítem con estilo poético. Conserva %d para el valor de maná.",
+    image: "https://images.unsplash.com/photo-1585504198199-20277593b94f?w=800&q=80",
+    imageCaption: "Inventario — ítems mágicos",
   },
   {
-    id: "DLG_007",
-    category: "DIALOGUE",
+    id: "DLG_007", category: "DIÁLOGO",
     source: "Run! The dark fortress is collapsing — we have less than two minutes!",
     maxChars: 80,
-    context: "Urgent dialogue during a timed escape sequence. High adrenaline moment.",
-    characterName: "Lyra (companion)",
-    note: "Convey urgency. Keep it short. Exclamation is mandatory.",
+    context: "Diálogo urgente durante una secuencia de escape con cuenta regresiva.",
+    characterName: "Lyra (compañera)",
+    note: "Transmite urgencia máxima. Corto y directo. El signo de exclamación es obligatorio.",
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80",
+    imageCaption: "Fortaleza oscura — secuencia de escape",
   },
   {
-    id: "TUT_008",
-    category: "TUTORIAL",
+    id: "TUT_008", category: "TUTORIAL",
     source: "Press [JUMP] to leap over obstacles. Hold [JUMP] to glide.",
     maxChars: 60,
-    context: "Tutorial hint displayed on screen during the first level.",
+    context: "Indicación de tutorial en pantalla durante el primer nivel del juego.",
     characterName: null,
-    note: "Keep [JUMP] in brackets. Do not translate button names.",
+    note: "Conserva [JUMP] entre corchetes exactamente. No traduzcas los nombres de botones.",
+    image: "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800&q=80",
+    imageCaption: "Primer nivel — zona de tutorial",
   },
 ];
 
-const CATEGORY_COLORS = {
-  HUD: { bg: "#1a2a1a", border: "#4ade80", text: "#4ade80" },
-  DIALOGUE: { bg: "#1a1a2e", border: "#818cf8", text: "#818cf8" },
-  MENU: { bg: "#2a1a1a", border: "#f87171", text: "#f87171" },
-  SYSTEM: { bg: "#1a1f2e", border: "#60a5fa", text: "#60a5fa" },
-  ITEM: { bg: "#2a1a2a", border: "#c084fc", text: "#c084fc" },
-  TUTORIAL: { bg: "#1a2a2a", border: "#34d399", text: "#34d399" },
+const CAT = {
+  HUD:      { bg: "#0f2318", border: "#4ade80", text: "#4ade80" },
+  DIÁLOGO:  { bg: "#12102b", border: "#818cf8", text: "#818cf8" },
+  MENÚ:     { bg: "#1f0f0f", border: "#f87171", text: "#f87171" },
+  SISTEMA:  { bg: "#0f1520", border: "#60a5fa", text: "#60a5fa" },
+  ÍTEM:     { bg: "#1a0f25", border: "#c084fc", text: "#c084fc" },
+  TUTORIAL: { bg: "#0f1e1e", border: "#34d399", text: "#34d399" },
 };
 
-const RUBRIC_CRITERIA = [
-  { key: "variables", label: "Variables intactas", max: 20 },
-  { key: "charLimit", label: "Límite de caracteres", max: 15 },
-  { key: "register", label: "Registro y tono", max: 25 },
-  { key: "fluency", label: "Fluidez en español latino", max: 25 },
-  { key: "accuracy", label: "Fidelidad al sentido", max: 15 },
-];
-
-function ScoreBar({ score, max, color }) {
-  const pct = Math.round((score / max) * 100);
+function Badge({ cat }) {
+  const s = CAT[cat] || CAT["SISTEMA"];
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <div style={{
-        flex: 1, height: 8, background: "#1e1e2e", borderRadius: 4, overflow: "hidden"
-      }}>
-        <div style={{
-          width: `${pct}%`, height: "100%",
-          background: pct >= 80 ? "#4ade80" : pct >= 50 ? "#facc15" : "#f87171",
-          borderRadius: 4, transition: "width 0.6s ease"
-        }} />
-      </div>
-      <span style={{ fontSize: 12, color: "#94a3b8", minWidth: 50, textAlign: "right" }}>
-        {score}/{max}
-      </span>
-    </div>
+    <span style={{ background: s.border, color: "#080810", fontSize: 10, fontWeight: 800,
+      padding: "3px 9px", borderRadius: 3, letterSpacing: 1.5 }}>{cat}</span>
   );
 }
 
-export default function LocalizationLab() {
+export default function App() {
+  const [step, setStep] = useState("register");
+  const [student, setStudent] = useState({ name: "", email: "" });
   const [current, setCurrent] = useState(0);
   const [translations, setTranslations] = useState({});
-  const [feedbacks, setFeedbacks] = useState({});
+  const [evaluation, setEvaluation] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showPanel, setShowPanel] = useState(false);
-  const [completed, setCompleted] = useState(false);
-  const textareaRef = useRef(null);
 
   const str = STRINGS[current];
-  const translation = translations[str.id] || "";
-  const feedback = feedbacks[str.id];
-  const cat = CATEGORY_COLORS[str.category] || CATEGORY_COLORS["SYSTEM"];
-  const charCount = translation.length;
-  const overLimit = charCount > str.maxChars;
+  const cat = CAT[str?.category] || CAT["SISTEMA"];
+  const allDone = STRINGS.every(s => (translations[s.id] || "").trim().length > 0);
+  const doneCount = Object.keys(translations).filter(k => translations[k].trim()).length;
 
-  useEffect(() => {
-    setShowPanel(!!feedbacks[str.id]);
-  }, [current, feedbacks]);
-
-  async function evaluate() {
-    if (!translation.trim()) return;
+  async function handleSubmit() {
     setLoading(true);
-    setShowPanel(false);
-
-    const prompt = `You are an expert video game localization evaluator. A student translated the following English string into Latin American Spanish for a Fantasy RPG game.
-
-STRING ID: ${str.id}
-CATEGORY: ${str.category}
-CONTEXT: ${str.context}
-NOTE FOR TRANSLATOR: ${str.note}
-CHARACTER: ${str.characterName || "N/A (UI text)"}
-MAX CHARACTERS ALLOWED: ${str.maxChars}
-
-ORIGINAL (English): ${str.source}
-STUDENT TRANSLATION: ${translation}
-CHARACTER COUNT: ${charCount} / ${str.maxChars}
-
-Evaluate the translation using this rubric (respond ONLY in JSON, no markdown, no preamble):
-{
-  "scores": {
-    "variables": <0-20, full points if all variables like {0}, %s, %d, [JUMP] are preserved exactly>,
-    "charLimit": <0-15, 15 if within limit, 10 if 1-5 chars over, 0 if more than 5 over>,
-    "register": <0-25, based on tone, formality level appropriate to context and character>,
-    "fluency": <0-25, natural Latin American Spanish, no calques, no peninsular terms>,
-    "accuracy": <0-15, faithfulness to the source meaning>
-  },
-  "total": <sum of all scores, max 100>,
-  "summary": "<2-3 sentence overall assessment in Spanish>",
-  "strengths": ["<strength 1 in Spanish>", "<strength 2 in Spanish>"],
-  "issues": ["<issue 1 in Spanish with suggested fix>", "<issue 2 in Spanish if any>"],
-  "suggestedTranslation": "<your suggested translation for comparison>"
-}`;
-
+    let evals = [];
     try {
+      const prompt = `You are a video game localization evaluator. Evaluate ${STRINGS.length} Latin American Spanish translations of a Fantasy RPG.
+Student: ${student.name}
+${STRINGS.map((s, i) => `STRING ${i+1}: ${s.id} [${s.category}]
+Original: ${s.source}
+Translation: ${translations[s.id] || "(empty)"}
+Context: ${s.context}
+Note: ${s.note}`).join("\n\n")}
+Respond ONLY with a JSON array, no markdown:
+[{"total":0-100,"summary":"2 sentences in Spanish","issues":["issue in Spanish"]}]`;
+
       const res = await fetch("/api/evaluate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{ role: "user", content: prompt }],
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000,
+          messages: [{ role: "user", content: prompt }] }),
       });
       const data = await res.json();
-      const raw = data.content?.find(b => b.type === "text")?.text || "";
-      const clean = raw.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
-      setFeedbacks(prev => ({ ...prev, [str.id]: parsed }));
-      setShowPanel(true);
-    } catch (e) {
-      setFeedbacks(prev => ({ ...prev, [str.id]: { error: true } }));
-      setShowPanel(true);
+      const raw = data.content?.find(b => b.type === "text")?.text || "[]";
+      evals = JSON.parse(raw.replace(/```json|```/g, "").trim());
+    } catch {
+      evals = STRINGS.map(() => ({ total: 0, summary: "No se pudo evaluar automáticamente.", issues: [] }));
     }
+    setEvaluation(evals);
     setLoading(false);
+    setStep("done");
   }
 
-  function next() {
-    if (current < STRINGS.length - 1) {
-      setCurrent(c => c + 1);
-    } else {
-      setCompleted(true);
-    }
-  }
-
-  function prev() {
-    if (current > 0) setCurrent(c => c - 1);
-  }
-
-  const progress = Object.keys(feedbacks).length;
-  const avgScore = progress > 0
-    ? Math.round(Object.values(feedbacks).filter(f => !f.error).reduce((acc, f) => acc + (f.total || 0), 0) / progress)
-    : null;
-
-  if (completed) {
-    const evaluated = Object.values(feedbacks).filter(f => !f.error);
-    const finalScore = evaluated.length > 0
-      ? Math.round(evaluated.reduce((a, f) => a + f.total, 0) / evaluated.length)
-      : 0;
-
-    return (
-      <div style={{
-        minHeight: "100vh", background: "#0a0a14",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontFamily: "'Segoe UI', system-ui, sans-serif", padding: 24
-      }}>
-        <div style={{ textAlign: "center", maxWidth: 520 }}>
-          <div style={{ fontSize: 64, marginBottom: 16 }}>⚔️</div>
-          <h1 style={{ color: "#f8f4e8", fontSize: 28, marginBottom: 8, fontFamily: "Georgia, serif" }}>
-            Ejercicio completado
-          </h1>
-          <p style={{ color: "#94a3b8", marginBottom: 32 }}>
-            Has localizado {evaluated.length} de {STRINGS.length} strings del juego
+  // ── REGISTER ──
+  if (step === "register") return (
+    <div style={S.page}>
+      <div style={S.card}>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 40, marginBottom: 10 }}>⚔️</div>
+          <h1 style={S.title}>Laboratorio de Localización</h1>
+          <p style={{ color: "#818cf8", fontSize: 13, margin: "4px 0 0" }}>Fantasy RPG · Inglés → Español Latino</p>
+          <p style={{ color: "#4b5563", fontSize: 13, marginTop: 12, lineHeight: 1.7 }}>
+            Localizarás 8 strings de un videojuego de rol. Recibirás una evaluación preliminar automática y retroalimentación personalizada de tu instructora.
           </p>
-          <div style={{
-            background: "#12121f", border: "1px solid #2d2d4e",
-            borderRadius: 12, padding: 32, marginBottom: 24
-          }}>
-            <div style={{ fontSize: 56, fontWeight: 800, color: finalScore >= 80 ? "#4ade80" : finalScore >= 60 ? "#facc15" : "#f87171" }}>
-              {finalScore}
-            </div>
-            <div style={{ color: "#94a3b8", fontSize: 14 }}>Puntuación promedio / 100</div>
-            <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
-              {RUBRIC_CRITERIA.map(c => {
-                const avg = evaluated.length > 0
-                  ? Math.round(evaluated.reduce((a, f) => a + (f.scores?.[c.key] || 0), 0) / evaluated.length)
-                  : 0;
-                return (
-                  <div key={c.key}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ color: "#cbd5e1", fontSize: 13 }}>{c.label}</span>
-                    </div>
-                    <ScoreBar score={avg} max={c.max} />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <button
-            onClick={() => { setCurrent(0); setCompleted(false); setTranslations({}); setFeedbacks({}); }}
-            style={{
-              background: "#4f46e5", color: "white", border: "none",
-              padding: "12px 32px", borderRadius: 8, cursor: "pointer", fontSize: 15
-            }}
-          >
-            Reiniciar ejercicio
-          </button>
+        </div>
+        <label style={S.label}>Nombre completo</label>
+        <input style={S.input} placeholder="Tu nombre" value={student.name}
+          onChange={e => setStudent(p => ({ ...p, name: e.target.value }))} />
+        <label style={{ ...S.label, marginTop: 14 }}>Correo electrónico</label>
+        <input style={S.input} type="email" placeholder="tu@correo.com" value={student.email}
+          onChange={e => setStudent(p => ({ ...p, email: e.target.value }))} />
+        <button style={{ ...S.btnPrimary, marginTop: 20, opacity: (!student.name || !student.email) ? 0.4 : 1 }}
+          disabled={!student.name || !student.email}
+          onClick={() => setStep("translate")}>Comenzar ejercicio →</button>
+        <div style={{ ...S.notice, marginTop: 16 }}>
+          ℹ️ Tus traducciones serán enviadas a tu instructora para revisión humana.
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
-  return (
-    <div style={{
-      minHeight: "100vh", background: "#0a0a14",
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-      color: "#f8f4e8", display: "flex", flexDirection: "column"
-    }}>
-      {/* Header */}
-      <div style={{
-        background: "#0d0d1a", borderBottom: "1px solid #1e1e3a",
-        padding: "12px 24px", display: "flex", alignItems: "center",
-        justifyContent: "space-between", flexWrap: "wrap", gap: 12
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 20 }}>⚔️</span>
-          <div>
-            <div style={{ fontFamily: "Georgia, serif", fontSize: 16, color: "#c4b5fd", letterSpacing: 1 }}>
-              LABORATORIO DE LOCALIZACIÓN
+  // ── DONE ──
+  if (step === "done") return (
+    <div style={S.page}>
+      <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 16px" }}>
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div style={{ fontSize: 48 }}>✓</div>
+          <h1 style={{ ...S.title, color: "#4ade80", marginTop: 12 }}>¡Ejercicio entregado!</h1>
+          <p style={{ color: "#64748b", fontSize: 14, marginTop: 8, lineHeight: 1.7 }}>
+            Tus traducciones han sido registradas, <strong style={{ color: "#e2e8f0" }}>{student.name}</strong>.<br />
+            Tu instructora revisará tu trabajo y te enviará retroalimentación personalizada.
+          </p>
+        </div>
+        <div style={{ ...S.notice, marginBottom: 24 }}>
+          🤖 La evaluación de abajo es <strong>preliminar y automática</strong>. No es la calificación final. Tu instructora revisará cada traducción y te enviará comentarios personalizados.
+        </div>
+        {evaluation && STRINGS.map((s, i) => {
+          const ev = evaluation[i] || {};
+          return (
+            <div key={s.id} style={S.evalCard}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <Badge cat={s.category} />
+                  <span style={{ color: "#4b5563", fontSize: 12 }}>{s.id}</span>
+                </div>
+                <span style={{ fontSize: 22, fontWeight: 800,
+                  color: ev.total >= 80 ? "#4ade80" : ev.total >= 60 ? "#facc15" : "#f87171" }}>
+                  {ev.total}<span style={{ fontSize: 12, color: "#4b5563" }}>/100</span>
+                </span>
+              </div>
+              <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 4 }}>Tu traducción:
+                <span style={{ color: "#cbd5e1", marginLeft: 6 }}>{translations[s.id]}</span>
+              </div>
+              <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6, marginTop: 6 }}>{ev.summary}</div>
+              {ev.issues?.map((iss, j) => (
+                <div key={j} style={{ fontSize: 12, color: "#94a3b8", borderLeft: "2px solid #f8717140",
+                  paddingLeft: 10, marginTop: 8 }}>⚠ {iss}</div>
+              ))}
             </div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>Fantasy RPG · EN → ES Latino</div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // ── REVIEW ──
+  if (step === "review") return (
+    <div style={S.page}>
+      <div style={{ maxWidth: 680, margin: "0 auto", padding: "32px 16px" }}>
+        <button onClick={() => setStep("translate")} style={{ background: "none", border: "none",
+          color: "#64748b", cursor: "pointer", fontSize: 13, marginBottom: 16 }}>← Seguir editando</button>
+        <h2 style={{ ...S.title, marginBottom: 8 }}>Revisa tus traducciones</h2>
+        <p style={{ color: "#4b5563", fontSize: 13, marginBottom: 24 }}>Verifica todo antes de enviar.</p>
+        {STRINGS.map((s, i) => {
+          const t = translations[s.id] || "";
+          return (
+            <div key={s.id} style={{ ...S.evalCard, borderColor: !t.trim() ? "#f87171" : "#1e2535" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ display: "flex", gap: 8 }}><Badge cat={s.category} /><span style={{ color: "#4b5563", fontSize: 12 }}>{s.id}</span></div>
+                <button onClick={() => { setCurrent(i); setStep("translate"); }}
+                  style={{ background: "none", border: "1px solid #818cf830", color: "#818cf8",
+                    padding: "3px 10px", borderRadius: 4, cursor: "pointer", fontSize: 12 }}>Editar</button>
+              </div>
+              <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 4 }}>{s.source}</div>
+              <div style={{ fontSize: 14, color: !t.trim() ? "#f87171" : "#e2e8f0" }}>
+                {!t.trim() ? "⚠ Sin traducción" : t}
+              </div>
+            </div>
+          );
+        })}
+        <div style={{ ...S.notice, margin: "20px 0" }}>
+          🤖 Al enviar, la IA generará una evaluación preliminar. Tu instructora revisará tu trabajo y te enviará retroalimentación personalizada.
+        </div>
+        <button style={{ ...S.btnPrimary, width: "100%", opacity: loading ? 0.6 : 1 }}
+          disabled={loading || !allDone} onClick={handleSubmit}>
+          {loading ? "⏳ Evaluando y enviando..." : "✦ Enviar ejercicio"}
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── TRANSLATE ──
+  return (
+    <div style={S.page}>
+      <header style={S.header}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 18 }}>⚔️</span>
+          <div>
+            <div style={{ fontSize: 12, color: "#c4b5fd", fontWeight: 700, letterSpacing: 1 }}>LABORATORIO DE LOCALIZACIÓN</div>
+            <div style={{ fontSize: 11, color: "#374151" }}>Fantasy RPG · EN → ES Latino</div>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-          {avgScore !== null && (
-            <div style={{ fontSize: 13, color: "#94a3b8" }}>
-              Promedio: <span style={{ color: avgScore >= 80 ? "#4ade80" : "#facc15", fontWeight: 700 }}>{avgScore}</span>
-            </div>
-          )}
-          <div style={{ fontSize: 13, color: "#94a3b8" }}>
-            {progress}/{STRINGS.length} evaluados
-          </div>
-          {/* Progress dots */}
-          <div style={{ display: "flex", gap: 5 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <span style={{ fontSize: 12, color: "#4b5563" }}>{doneCount} / {STRINGS.length} traducidos</span>
+          <div style={{ display: "flex", gap: 4 }}>
             {STRINGS.map((s, i) => (
-              <div key={i} onClick={() => setCurrent(i)} style={{
-                width: 10, height: 10, borderRadius: "50%", cursor: "pointer",
-                background: feedbacks[s.id] ? (feedbacks[s.id].total >= 70 ? "#4ade80" : "#f87171")
-                  : i === current ? "#818cf8" : "#2d2d4e",
+              <div key={i} onClick={() => setCurrent(i)} title={s.id} style={{
+                width: 9, height: 9, borderRadius: "50%", cursor: "pointer",
+                background: (translations[s.id]||"").trim() ? "#4ade80" : i === current ? "#818cf8" : "#1e2535",
                 border: i === current ? "1px solid #c4b5fd" : "none",
-                transition: "background 0.3s"
               }} />
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: 900, margin: "0 auto", width: "100%", padding: "24px 16px", gap: 20 }}>
-
-        {/* String card */}
-        <div style={{
-          background: cat.bg, border: `1px solid ${cat.border}`,
-          borderRadius: 12, padding: 20, position: "relative"
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <span style={{
-                background: cat.border, color: "#0a0a14", fontSize: 11, fontWeight: 700,
-                padding: "2px 8px", borderRadius: 4, letterSpacing: 1
-              }}>{str.category}</span>
-              <span style={{ color: "#64748b", fontSize: 12 }}>{str.id}</span>
-            </div>
-            <span style={{ fontSize: 12, color: "#64748b" }}>Límite: {str.maxChars} caracteres</span>
-          </div>
-
-          {str.characterName && (
-            <div style={{ marginBottom: 8 }}>
-              <span style={{ fontSize: 11, color: "#64748b" }}>Personaje: </span>
-              <span style={{ fontSize: 13, color: cat.text, fontStyle: "italic" }}>{str.characterName}</span>
-            </div>
-          )}
-
-          <div style={{
-            background: "#00000040", borderRadius: 8, padding: "12px 16px",
-            fontSize: 16, color: "#f8f4e8", lineHeight: 1.6, marginBottom: 12,
-            fontFamily: "Georgia, serif"
-          }}>
-            {str.source}
-          </div>
-
-          <div style={{
-            fontSize: 12, color: "#94a3b8", borderTop: `1px solid ${cat.border}30`,
-            paddingTop: 10, display: "flex", gap: 16, flexWrap: "wrap"
-          }}>
-            <span>📖 <em>{str.context}</em></span>
-          </div>
-          {str.note && (
-            <div style={{ marginTop: 6, fontSize: 12, color: "#facc15" }}>
-              ⚠️ Nota: {str.note}
-            </div>
+          {allDone && (
+            <button onClick={() => setStep("review")} style={{ background: "#14532d", color: "#4ade80",
+              border: "1px solid #4ade8040", padding: "7px 14px", borderRadius: 6,
+              cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Revisar y enviar →</button>
           )}
         </div>
+      </header>
 
-        {/* Translation input */}
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-            <label style={{ fontSize: 13, color: "#94a3b8" }}>Tu traducción al español latino</label>
-            <span style={{ fontSize: 12, color: overLimit ? "#f87171" : charCount > str.maxChars * 0.85 ? "#facc15" : "#64748b" }}>
-              {charCount} / {str.maxChars}
-            </span>
-          </div>
-          <textarea
-            ref={textareaRef}
-            value={translation}
-            onChange={e => setTranslations(prev => ({ ...prev, [str.id]: e.target.value }))}
-            placeholder="Escribe aquí tu traducción..."
-            style={{
-              width: "100%", minHeight: 90, background: "#12121f",
-              border: `1px solid ${overLimit ? "#f87171" : "#2d2d4e"}`,
-              borderRadius: 8, color: "#f8f4e8", fontSize: 15, padding: "12px 14px",
-              resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box",
-              lineHeight: 1.6
-            }}
-          />
-        </div>
-
-        {/* Action buttons */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <button
-            onClick={evaluate}
-            disabled={loading || !translation.trim()}
-            style={{
-              flex: 1, minWidth: 160, background: loading ? "#2d2d4e" : "#4f46e5",
-              color: "white", border: "none", padding: "12px 24px", borderRadius: 8,
-              cursor: loading || !translation.trim() ? "not-allowed" : "pointer",
-              fontSize: 14, fontWeight: 600, transition: "background 0.2s",
-              opacity: !translation.trim() ? 0.5 : 1
-            }}
-          >
-            {loading ? "⏳ Evaluando..." : "✦ Evaluar traducción"}
-          </button>
-
-          <button onClick={prev} disabled={current === 0} style={{
-            background: "transparent", color: current === 0 ? "#2d2d4e" : "#94a3b8",
-            border: `1px solid ${current === 0 ? "#1e1e3a" : "#2d2d4e"}`,
-            padding: "12px 20px", borderRadius: 8, cursor: current === 0 ? "not-allowed" : "pointer",
-            fontSize: 14
-          }}>← Anterior</button>
-
-          <button onClick={next} style={{
-            background: feedback ? "#0f2d1f" : "transparent",
-            color: feedback ? "#4ade80" : "#94a3b8",
-            border: `1px solid ${feedback ? "#4ade80" : "#2d2d4e"}`,
-            padding: "12px 20px", borderRadius: 8, cursor: "pointer", fontSize: 14
-          }}>
-            {current === STRINGS.length - 1 ? "Ver resultados →" : "Siguiente →"}
-          </button>
-        </div>
-
-        {/* Feedback panel */}
-        {showPanel && feedback && !feedback.error && (
-          <div style={{
-            background: "#0d0d1a", border: "1px solid #2d2d4e",
-            borderRadius: 12, padding: 20, animation: "fadeIn 0.3s ease"
-          }}>
-            <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
-
-            {/* Score */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-              <div>
-                <div style={{ fontSize: 11, color: "#64748b", marginBottom: 4 }}>PUNTUACIÓN TOTAL</div>
-                <div style={{
-                  fontSize: 42, fontWeight: 800,
-                  color: feedback.total >= 80 ? "#4ade80" : feedback.total >= 60 ? "#facc15" : "#f87171"
-                }}>
-                  {feedback.total}<span style={{ fontSize: 18, color: "#64748b" }}>/100</span>
-                </div>
-              </div>
-              <div style={{
-                background: "#12121f", borderRadius: 8, padding: "12px 16px",
-                maxWidth: 400, fontSize: 13, color: "#cbd5e1", lineHeight: 1.6
-              }}>
-                {feedback.summary}
-              </div>
+      <div style={S.main}>
+        {/* LEFT */}
+        <div style={S.left}>
+          <div style={{ position: "relative", height: 240, overflow: "hidden" }}>
+            <img src={str.image} alt={str.imageCaption} style={{ width: "100%", height: "100%",
+              objectFit: "cover", filter: "brightness(0.65) saturate(0.8)" }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 14px",
+              background: "linear-gradient(transparent, #080810bb)", display: "flex", alignItems: "center", gap: 8 }}>
+              <Badge cat={str.category} />
+              <span style={{ fontSize: 11, color: "#94a3b8" }}>{str.imageCaption}</span>
             </div>
-
-            {/* Rubric */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, color: "#64748b", marginBottom: 12, letterSpacing: 1 }}>RÚBRICA DE EVALUACIÓN</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {RUBRIC_CRITERIA.map(c => (
-                  <div key={c.key}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, color: "#cbd5e1" }}>{c.label}</span>
-                    </div>
-                    <ScoreBar score={feedback.scores?.[c.key] || 0} max={c.max} />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Strengths & issues */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
-              {feedback.strengths?.length > 0 && (
-                <div>
-                  <div style={{ fontSize: 11, color: "#4ade80", marginBottom: 8, letterSpacing: 1 }}>✓ FORTALEZAS</div>
-                  {feedback.strengths.map((s, i) => (
-                    <div key={i} style={{ fontSize: 13, color: "#94a3b8", marginBottom: 6, paddingLeft: 12, borderLeft: "2px solid #4ade8040" }}>
-                      {s}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {feedback.issues?.length > 0 && (
-                <div>
-                  <div style={{ fontSize: 11, color: "#f87171", marginBottom: 8, letterSpacing: 1 }}>✗ ÁREAS DE MEJORA</div>
-                  {feedback.issues.map((s, i) => (
-                    <div key={i} style={{ fontSize: 13, color: "#94a3b8", marginBottom: 6, paddingLeft: 12, borderLeft: "2px solid #f8717140" }}>
-                      {s}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Suggested translation */}
-            {feedback.suggestedTranslation && (
-              <div style={{ background: "#12121f", borderRadius: 8, padding: "12px 16px", borderLeft: "3px solid #818cf8" }}>
-                <div style={{ fontSize: 11, color: "#818cf8", marginBottom: 6, letterSpacing: 1 }}>TRADUCCIÓN DE REFERENCIA</div>
-                <div style={{ fontSize: 14, color: "#e2e8f0", fontFamily: "Georgia, serif" }}>
-                  {feedback.suggestedTranslation}
-                </div>
+            {str.characterName && (
+              <div style={{ position: "absolute", top: 12, right: 12, background: "#0a0a16aa",
+                backdropFilter: "blur(4px)", border: "1px solid #818cf830", borderRadius: 6, padding: "4px 10px" }}>
+                <span style={{ fontSize: 10, color: "#818cf8" }}>PERSONAJE </span>
+                <span style={{ fontSize: 13, color: "#e2e8f0", fontStyle: "italic" }}>{str.characterName}</span>
               </div>
             )}
           </div>
-        )}
 
-        {showPanel && feedback?.error && (
-          <div style={{ background: "#2a1a1a", border: "1px solid #f87171", borderRadius: 8, padding: 16, color: "#f87171", fontSize: 14 }}>
-            Error al conectar con la IA. Verifica tu conexión e intenta de nuevo.
+          <div style={{ padding: "18px 20px", borderTop: `2px solid ${cat.border}40`,
+            background: cat.bg, borderBottom: "1px solid #12122a" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+              <span style={{ fontSize: 11, color: "#4b5563", letterSpacing: 1 }}>{str.id} · TEXTO ORIGINAL</span>
+              <span style={{ fontSize: 11, color: "#4b5563" }}>Límite: {str.maxChars} car.</span>
+            </div>
+            <p style={{ fontSize: 17, color: "#f1f5f9", fontFamily: "Georgia, serif", lineHeight: 1.6, margin: 0 }}>
+              {str.source}
+            </p>
           </div>
-        )}
+
+          <div style={{ padding: "16px 20px", flex: 1, background: "#0a0a14" }}>
+            <div style={{ fontSize: 11, color: "#4b5563", letterSpacing: 1, marginBottom: 6 }}>CONTEXTO</div>
+            <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>{str.context}</p>
+            {str.note && (
+              <div style={{ marginTop: 12, padding: "8px 12px", background: "#1a1200",
+                border: "1px solid #92400e40", borderRadius: 6, fontSize: 12, lineHeight: 1.6 }}>
+                <span style={{ color: "#facc15" }}>⚠</span>{" "}
+                <strong style={{ color: "#fbbf24" }}>Nota:</strong>{" "}
+                <span style={{ color: "#d1a84b" }}>{str.note}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div style={S.right}>
+          <div style={{ fontSize: 11, color: "#4b5563", letterSpacing: 1, marginBottom: 8 }}>
+            STRING {current + 1} DE {STRINGS.length}
+          </div>
+          <h2 style={{ fontSize: 15, color: "#c4b5fd", fontWeight: 600, margin: "0 0 20px" }}>
+            Tu traducción al español latino
+          </h2>
+          <textarea
+            value={translations[str.id] || ""}
+            onChange={e => setTranslations(p => ({ ...p, [str.id]: e.target.value }))}
+            placeholder="Escribe aquí tu traducción..."
+            style={S.textarea}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, marginBottom: 28 }}>
+            <span style={{ fontSize: 12, color: (translations[str.id]||"").length > str.maxChars ? "#f87171" :
+              (translations[str.id]||"").length > str.maxChars * 0.85 ? "#facc15" : "#4b5563" }}>
+              {(translations[str.id]||"").length} / {str.maxChars} caracteres
+            </span>
+            {(translations[str.id]||"").length > str.maxChars && (
+              <span style={{ fontSize: 11, color: "#f87171" }}>⚠ Excede el límite</span>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={() => setCurrent(c => Math.max(0, c - 1))} disabled={current === 0}
+              style={{ background: "transparent", color: "#64748b", border: "1px solid #1e2535",
+                padding: "12px 16px", borderRadius: 8, cursor: "pointer", fontSize: 14,
+                opacity: current === 0 ? 0.3 : 1 }}>← Anterior</button>
+            <button onClick={() => current < STRINGS.length - 1 ? setCurrent(c => c + 1) : setStep("review")}
+              style={S.btnPrimary}>
+              {current === STRINGS.length - 1 ? "Revisar todo →" : "Siguiente →"}
+            </button>
+          </div>
+          <div style={{ ...S.notice, marginTop: 28 }}>
+            🤖 Al enviar, recibirás una evaluación preliminar automática. Tu instructora revisará cada traducción y te enviará retroalimentación personalizada.
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+
+const S = {
+  page: { minHeight: "100vh", background: "#080810", color: "#f1f5f9",
+    fontFamily: "'Segoe UI', system-ui, sans-serif" },
+  header: { background: "#0a0a16", borderBottom: "1px solid #12122a", padding: "12px 24px",
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    flexWrap: "wrap", gap: 12, position: "sticky", top: 0, zIndex: 10 },
+  main: { display: "grid", gridTemplateColumns: "1fr 1fr", minHeight: "calc(100vh - 57px)" },
+  left: { borderRight: "1px solid #12122a", display: "flex", flexDirection: "column" },
+  right: { padding: "32px 28px", display: "flex", flexDirection: "column" },
+  card: { maxWidth: 440, margin: "60px auto", padding: "40px 36px", background: "#0d0d1e",
+    border: "1px solid #12122a", borderRadius: 16 },
+  title: { fontFamily: "Georgia, serif", fontSize: 22, color: "#f1f5f9", margin: 0 },
+  label: { display: "block", fontSize: 12, color: "#64748b", marginBottom: 6, letterSpacing: 0.5 },
+  input: { width: "100%", background: "#080810", border: "1px solid #1e2535", borderRadius: 8,
+    color: "#f1f5f9", fontSize: 14, padding: "11px 14px", outline: "none",
+    boxSizing: "border-box", fontFamily: "inherit" },
+  textarea: { width: "100%", minHeight: 130, background: "#0d0d1e", border: "1px solid #1e2535",
+    borderRadius: 8, color: "#f1f5f9", fontSize: 15, padding: "14px", resize: "vertical",
+    outline: "none", fontFamily: "inherit", lineHeight: 1.6, boxSizing: "border-box" },
+  btnPrimary: { flex: 1, background: "#4f46e5", color: "white", border: "none",
+    padding: "12px 20px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 600 },
+  notice: { background: "#0d1117", border: "1px solid #1e2535", borderRadius: 8,
+    padding: "12px 14px", fontSize: 12, color: "#64748b", lineHeight: 1.6 },
+  evalCard: { background: "#0d0d1e", border: "1px solid #1e2535", borderRadius: 10,
+    padding: "16px 18px", marginBottom: 12 },
+};
